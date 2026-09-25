@@ -1,15 +1,34 @@
-// src/routes/authMiddleware.js
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
+const jwt = require("jsonwebtoken");
 
-module.exports = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Acceso no autorizado' });
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers.authorization;
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Token inválido' });
-        req.user = user;
+    if (!authHeader) {
+        return res.status(401).json({
+            success: false,
+            message: "Token de autenticación requerido"
+        });
+    }
+
+    const token = authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : authHeader;
+
+    try {
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
+
+        req.user = decoded;
+
         next();
-    });
-};
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Token inválido o expirado"
+        });
+    }
+}
+
+module.exports = authenticateToken;
