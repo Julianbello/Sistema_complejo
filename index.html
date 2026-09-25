@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma C2C</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        body { background: #f4f4f9; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; background: #222; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .grid-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .grid-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .prod-card { border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; background: #fff; }
+        .btn { background: #007bff; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; margin-top: 5px; width: 100%; }
+        .btn-success { background: #28a745; }
+        .error { color: red; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>Mercado C2C</h2>
+    <button class="btn" onclick="toggleModal('modal-reg')" style="width:auto;">Registrarse</button>
+</header>
+
+<div id="modal-reg" class="card" style="display:none;">
+    <h3>Registro de Usuario</h3>
+    <form id="reg-form">
+        <input type="text" id="reg-nombre" placeholder="Nombre completo" required style="width:100%; margin: 5px 0;">
+        <input type="email" id="reg-email" placeholder="Correo electrónico" required style="width:100%; margin: 5px 0;">
+        <input type="password" id="reg-pass" placeholder="Contraseña" required style="width:100%; margin: 5px 0;">
+        <input type="tel" id="reg-tel" placeholder="Teléfono" required style="width:100%; margin: 5px 0;">
+        <p id="reg-error" class="error"></p>
+        <button type="submit" class="btn btn-success">Guardar Registro</button>
+    </form>
+</div>
+
+<div class="grid-layout">
+    <aside class="card">
+        <h3>Filtros</h3><br>
+        <input type="text" id="search-input" placeholder="Buscar..." style="width:100%; margin-bottom: 10px;">
+        <select id="cat-select" style="width:100%; margin-bottom: 10px;">
+            <option value="">Todas</option>
+            <option value="Tecnología">Tecnología</option>
+            <option value="Ropa">Ropa</option>
+        </select>
+        <input type="number" id="min-price" placeholder="Mín" style="width:48%;">
+        <input type="number" id="max-price" placeholder="Máx" style="width:48%;"><br><br>
+        <button class="btn" id="btn-filter">Aplicar Filtros</button>
+    </aside>
+
+    <main>
+        <div id="product-list" class="grid-products"></div>
+    </main>
+</div>
+
+<script src="/src/main.js"></script>
+</body>
+</html>
