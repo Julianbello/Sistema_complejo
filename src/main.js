@@ -1,3 +1,5 @@
+let selectedProductId = null;
+
 // Alternar visibilidad de modales
 function toggleModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -7,7 +9,43 @@ function toggleModal(modalId) {
   }
 }
 
+function getToken() {
+  return localStorage.getItem('token');
+}
+
+function saveSession(token, user) {
+  localStorage.setItem('token', token);
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  updateAuthUI();
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('currentUser');
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const token = getToken();
+  const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const guestButtons = document.getElementById('guestButtons');
+  const userButtons = document.getElementById('userButtons');
+  const userNameLabel = document.getElementById('userNameLabel');
+
+  if (token && user) {
+    guestButtons.classList.add('hidden');
+    userButtons.classList.remove('hidden');
+    userButtons.classList.add('flex');
+    userNameLabel.textContent = `Hola, ${user.name}`;
+  } else {
+    guestButtons.classList.remove('hidden');
+    userButtons.classList.add('hidden');
+    userButtons.classList.remove('flex');
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  updateAuthUI();
   loadProducts();
 
   // 1. REGISTRO DE USUARIO
@@ -18,11 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const userData = {
         name: document.getElementById('regName').value,
-        nombre: document.getElementById('regName').value, // Compatibilidad con ambas claves
         email: document.getElementById('regEmail').value,
         password: document.getElementById('regPassword').value,
-        phone: document.getElementById('regPhone').value,
-        telefono: document.getElementById('regPhone').value
+        phone: document.getElementById('regPhone').value
       };
 
       try {
@@ -35,15 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (res.ok) {
-          // Guardar usuario simulado en almacenamiento local
-          const userObj = data.user || { id: Date.now(), name: userData.name };
-          localStorage.setItem('currentUser', JSON.stringify(userObj));
-
+          saveSession(data.token, data.user);
           alert('¡Usuario registrado con éxito!');
           toggleModal('modalRegister');
           formRegister.reset();
         } else {
-          alert(data.error || data.message || 'Error al registrar el usuario');
+          alert(data.message || 'Error al registrar el usuario');
         }
       } catch (err) {
         console.error(err);
@@ -52,34 +85,70 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. PUBLICAR PRODUCTO
+  // 2. INICIO DE SESIÓN
+  const formLogin = document.getElementById('formLogin');
+  if (formLogin) {
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const credentials = {
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value
+      };
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(credentials)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          saveSession(data.token, data.user);
+          alert('¡Bienvenido de nuevo!');
+          toggleModal('modalLogin');
+          formLogin.reset();
+        } else {
+          alert(data.message || 'Correo o contraseña incorrectos');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de red al iniciar sesión');
+      }
+    });
+  }
+
+  // 3. PUBLICAR PRODUCTO
   const formProduct = document.getElementById('formProduct');
   if (formProduct) {
     formProduct.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Obtener usuario guardado o usar ID predeterminado (1)
-      const savedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      const userId = savedUser.id || 1;
+      const token = getToken();
+      if (!token) {
+        alert('Debes iniciar sesión para publicar un producto');
+        toggleModal('modalProduct');
+        toggleModal('modalLogin');
+        return;
+      }
 
       const productData = {
         title: document.getElementById('prodTitle').value,
-        titulo: document.getElementById('prodTitle').value,
         description: document.getElementById('prodDesc').value,
-        descripcion: document.getElementById('prodDesc').value,
         price: parseFloat(document.getElementById('prodPrice').value),
-        precio: parseFloat(document.getElementById('prodPrice').value),
         category: document.getElementById('prodCategory').value,
-        categoria: document.getElementById('prodCategory').value,
-        image: document.getElementById('prodImage').value || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
-        usuario_id: userId,
-        vendedor_id: userId
+        imageUrl: document.getElementById('prodImage').value || ''
       };
 
       try {
         const res = await fetch('/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify(productData)
         });
 
@@ -91,11 +160,57 @@ document.addEventListener('DOMContentLoaded', () => {
           formProduct.reset();
           loadProducts();
         } else {
-          alert(data.error || data.message || 'Error al publicar el producto');
+          alert(data.message || 'Error al publicar el producto');
         }
       } catch (err) {
         console.error(err);
         alert('Error de red al intentar publicar el producto');
+      }
+    });
+  }
+
+  // 4. CONFIRMAR COMPRA (dirección + método de pago)
+  const formCheckout = document.getElementById('formCheckout');
+  if (formCheckout) {
+    formCheckout.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token = getToken();
+      if (!token || !selectedProductId) {
+        alert('Debes iniciar sesión para comprar');
+        return;
+      }
+
+      const orderData = {
+        productId: selectedProductId,
+        address: document.getElementById('checkoutAddress').value,
+        paymentMethod: document.getElementById('checkoutPayment').value
+      };
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(orderData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          alert('¡Orden de compra generada con éxito en GIATE!');
+          toggleModal('modalCheckout');
+          formCheckout.reset();
+          selectedProductId = null;
+          loadProducts();
+        } else {
+          alert(data.message || 'Error al generar la orden');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al procesar la compra');
       }
     });
   }
@@ -108,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnSearch) btnSearch.addEventListener('click', loadProducts);
 });
 
-// 3. CARGAR PRODUCTOS DESDE LA API
+// 5. CARGAR PRODUCTOS DESDE LA API
 async function loadProducts() {
   const grid = document.getElementById('productsGrid');
   const countLabel = document.getElementById('productCount');
@@ -125,12 +240,13 @@ async function loadProducts() {
 
   try {
     const res = await fetch(query);
-    const products = await res.json();
+    const response = await res.json();
+    const products = response.data || [];
 
     grid.innerHTML = '';
-    if (countLabel) countLabel.textContent = `${products.length || 0} publicaciones`;
+    if (countLabel) countLabel.textContent = `${response.total ?? products.length} publicaciones`;
 
-    if (!Array.isArray(products) || products.length === 0) {
+    if (products.length === 0) {
       grid.innerHTML = `<div class="col-span-full text-center py-12 text-spotTextMuted">No se encontraron productos. ¡Sé el primero en publicar uno!</div>`;
       return;
     }
@@ -141,19 +257,19 @@ async function loadProducts() {
       card.innerHTML = `
         <div>
           <div class="relative overflow-hidden h-48 bg-black">
-            <img src="${p.image || p.imagen || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}" alt="${p.title || p.titulo}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
             <span class="absolute top-3 right-3 bg-black/70 backdrop-blur-md text-spotGreen text-xs font-bold px-2.5 py-1 rounded-full border border-spotGreen/20">
-              ${p.category || p.categoria || 'General'}
+              ${p.category || 'General'}
             </span>
           </div>
           <div class="p-5">
-            <h4 class="font-bold text-white text-base line-clamp-1">${p.title || p.titulo}</h4>
-            <p class="text-xs text-spotTextMuted mt-1 line-clamp-2">${p.description || p.descripcion || 'Sin descripción'}</p>
-            <div class="text-2xl font-black text-spotGreen mt-4">$ ${Number(p.price || p.precio || 0).toLocaleString()}</div>
+            <h4 class="font-bold text-white text-base line-clamp-1">${p.title}</h4>
+            <p class="text-xs text-spotTextMuted mt-1 line-clamp-2">${p.description || 'Sin descripción'}</p>
+            <div class="text-2xl font-black text-spotGreen mt-4">$ ${Number(p.price || 0).toLocaleString()}</div>
           </div>
         </div>
         <div class="p-5 pt-0">
-          <button onclick="buyProduct(${p.id})" class="w-full bg-spotGreen text-black hover:bg-spotGreenHover font-bold py-2.5 rounded-full text-sm transition transform active:scale-95 shadow-md shadow-spotGreen/10">
+          <button onclick="buyProduct('${p._id}')" class="w-full bg-spotGreen text-black hover:bg-spotGreenHover font-bold py-2.5 rounded-full text-sm transition transform active:scale-95 shadow-md shadow-spotGreen/10">
             Comprar Ahora
           </button>
         </div>
@@ -165,20 +281,14 @@ async function loadProducts() {
   }
 }
 
-// 4. COMPRA DE PRODUCTO
-async function buyProduct(productId) {
-  try {
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, quantity: 1 })
-    });
-    if (res.ok) {
-      alert('¡Orden de compra generada con éxito en GIATE!');
-    } else {
-      alert('Error al generar la orden');
-    }
-  } catch (err) {
-    alert('Error al procesar la compra');
+// 6. INICIAR COMPRA (abre el modal de checkout)
+function buyProduct(productId) {
+  const token = getToken();
+  if (!token) {
+    alert('Debes iniciar sesión para comprar');
+    toggleModal('modalLogin');
+    return;
   }
+  selectedProductId = productId;
+  toggleModal('modalCheckout');
 }

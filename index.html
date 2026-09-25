@@ -26,7 +26,7 @@
 </head>
 <body class="bg-spotDark text-white font-sans min-h-screen selection:bg-spotGreen selection:text-black">
 
-  <!-- Header / Navbar Navbar -->
+  <!-- Header / Navbar -->
   <header class="bg-black/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/10">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
       
@@ -58,16 +58,29 @@
 
       <!-- Botones de Acción -->
       <div class="flex items-center gap-3" id="userAuthContainer">
-        <button 
-          onclick="toggleModal('modalRegister')" 
-          class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
-          Registrarse
-        </button>
-        <button 
-          onclick="toggleModal('modalProduct')" 
-          class="bg-spotGreen text-black font-bold text-sm px-5 py-2.5 rounded-full hover:bg-spotGreenHover transition transform hover:scale-105 shadow-md shadow-spotGreen/20 flex items-center gap-2">
-          <i class="fa-solid fa-plus text-xs"></i> Publicar
-        </button>
+        <div id="guestButtons" class="flex items-center gap-3">
+          <button
+            onclick="toggleModal('modalLogin')"
+            class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
+            Iniciar Sesión
+          </button>
+          <button 
+            onclick="toggleModal('modalRegister')" 
+            class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
+            Registrarse
+          </button>
+        </div>
+        <div id="userButtons" class="hidden items-center gap-3">
+          <span id="userNameLabel" class="text-sm text-spotTextMuted font-semibold"></span>
+          <button 
+            onclick="toggleModal('modalProduct')" 
+            class="bg-spotGreen text-black font-bold text-sm px-5 py-2.5 rounded-full hover:bg-spotGreenHover transition transform hover:scale-105 shadow-md shadow-spotGreen/20 flex items-center gap-2">
+            <i class="fa-solid fa-plus text-xs"></i> Publicar
+          </button>
+          <button onclick="logout()" class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
+            Salir
+          </button>
+        </div>
       </div>
 
     </div>
@@ -143,6 +156,19 @@
     </div>
   </div>
 
+  <!-- Modal: Iniciar Sesión -->
+  <div id="modalLogin" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+      <button onclick="toggleModal('modalLogin')" class="absolute top-4 right-4 text-spotTextMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-4 text-white">Iniciar Sesión en GIATE</h3>
+      <form id="formLogin" class="space-y-4">
+        <input type="email" id="loginEmail" placeholder="Correo Electrónico" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
+        <input type="password" id="loginPassword" placeholder="Contraseña" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
+        <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Entrar</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal: Publicar Producto -->
   <div id="modalProduct" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
     <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
@@ -160,6 +186,24 @@
         </select>
         <input type="text" id="prodImage" placeholder="URL de Imagen (Opcional)" class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
         <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Publicar Ahora</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar Compra (dirección + método de pago) -->
+  <div id="modalCheckout" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+      <button onclick="toggleModal('modalCheckout')" class="absolute top-4 right-4 text-spotTextMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-4 text-white">Confirmar Compra</h3>
+      <form id="formCheckout" class="space-y-4">
+        <input type="text" id="checkoutAddress" placeholder="Dirección de entrega" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
+        <select id="checkoutPayment" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen">
+          <option value="">Selecciona un método de pago</option>
+          <option value="Tarjeta">Tarjeta de crédito/débito</option>
+          <option value="MercadoPago">MercadoPago</option>
+          <option value="Contraentrega">Pago contraentrega</option>
+        </select>
+        <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Confirmar y Pagar</button>
       </form>
     </div>
   </div>

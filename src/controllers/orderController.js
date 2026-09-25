@@ -1,30 +1,80 @@
-// src/controllers/orderController.js
-const { products, orders } = require('../models/dataStore');
+const Product = require("../models/product");
+const Order = require("../models/order");
+const connectDatabase = require("../config/database");
 
-exports.createOrder = (req, res) => {
-    const { productoId, direccionEntrega, metodoPago } = req.body;
-    const product = products.find(p => p.id === productoId);
+async function createOrder(req, res) {
+    try {
+        await connectDatabase();
 
-    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-    if (product.vendedorId === req.user.id) {
-        return res.status(400).json({ error: 'No puedes comprar tu propio producto' });
+        const { productId, address, paymentMethod } = req.body;
+
+        if (!productId || !address || !paymentMethod) {
+            return res.status(400).json({
+                success: false,
+                message: "Faltan campos obligatorios (producto, dirección o método de pago)"
+            });
+        }
+
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Producto no encontrado"
+            });
+        }
+
+        if (product.seller.toString() === req.user.id) {
+            return res.status(400).json({
+                success: false,
+                message: "No puedes comprar tu propio producto"
+            });
+        }
+
+        if (product.status !== "Disponible") {
+            return res.status(400).json({
+                success: false,
+                message: "El producto ya no está disponible"
+            });
+        }
+
+        // Actualización atómica: evita que dos compradores compren el mismo producto a la vez
+        const updatedProduct = await Product.findOneAndUpdate(
+            { _id: productId, status: "Disponible" },
+            { status: "Vendido" },
+            { new: true }
+        );
+
+        if (!updatedProduct) {
+            return res.status(409).json({
+                success: false,
+                message: "El producto acaba de ser vendido a otro comprador"
+            });
+        }
+
+        const order = await Order.create({
+            buyer: req.user.id,
+            seller: product.seller,
+            product: product._id,
+            address,
+            paymentMethod,
+            status: "Pagado"
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Compra realizada con éxito",
+            order
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Error al procesar la compra"
+        });
     }
-    if (product.estado !== 'Disponible') {
-        return res.status(400).json({ error: 'El producto ya no está disponible' });
-    }
+}
 
-    product.estado = 'Vendido';
-    const newOrder = {
-        id: `ord_${Date.now()}`,
-        compradorId: req.user.id,
-        productoId,
-        total: product.precio,
-        direccionEntrega,
-        metodoPago,
-        estado: 'Completado',
-        createdAt: new Date()
-    };
-
-    orders.push(newOrder);
-    res.status(201).json({ message: 'Compra realizada con éxito', order: newOrder });
+module.exports = {
+    createOrder
 };
