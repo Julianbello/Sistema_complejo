@@ -1,7 +1,6 @@
 const Product = require("../models/product");
 const Order = require("../models/order");
 const connectDatabase = require("../config/database");
-const { notifySeller } = require("../services/saleNotifier");
 
 async function createOrder(req, res) {
     try {
@@ -60,13 +59,6 @@ async function createOrder(req, res) {
             address,
             paymentMethod,
             status: "Pagado"
-        });
-
-        // Avisar al vendedor que su producto se vendió (no rompe la compra si falla)
-        await notifySeller({
-            order,
-            product: updatedProduct,
-            buyerId: req.user.id
         });
 
         return res.status(201).json({

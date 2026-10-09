@@ -4,7 +4,6 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
-const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 
@@ -23,7 +22,6 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/notifications", notificationRoutes);
 
 app.use((req, res) => {
     res.status(404).json({
