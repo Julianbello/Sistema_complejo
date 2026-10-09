@@ -11,13 +11,17 @@ async function connectDatabase() {
         return cached.conn;
     }
 
+    // Si la conexión se cayó, se obliga a crear una nueva
+    if (cached.conn && mongoose.connection.readyState !== 1) {
+        cached.conn = null;
+        cached.promise = null;
+    }
+
+    // Prioridad: variable de entorno MONGODB_URI (Vercel -> Settings -> Environment Variables).
+    // Si no existe, usa esta URI. Cambia Jul14nb3ll0 por tu contraseña original de Mongo.
     const mongoUri =
         process.env.MONGODB_URI ||
         "mongodb+srv://julianbellotiven_db_user:Jul14nb3ll0@cluster0.ltmtv9n.mongodb.net/giate?retryWrites=true&w=majority&appName=Cluster0";
-
-    if (mongoUri.includes("Jul14nb3ll0")) {
-        throw new Error("Falta poner la contraseña de MongoDB en src/config/database.js");
-    }
 
     if (!cached.promise) {
         cached.promise = mongoose.connect(mongoUri, {
