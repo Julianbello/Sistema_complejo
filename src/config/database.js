@@ -1,21 +1,39 @@
 const mongoose = require("mongoose");
 
-let connected = false;
+// Cache global: en Vercel (serverless) evita abrir una conexión nueva en cada petición
+let cached = global._mongooseCache;
+if (!cached) {
+    cached = global._mongooseCache = { conn: null, promise: null };
+}
 
 async function connectDatabase() {
-    if (connected) {
-        return;
+    if (cached.conn && mongoose.connection.readyState === 1) {
+        return cached.conn;
     }
 
-    if (!process.env.MONGODB_URI) {
-        throw new Error("MONGODB_URI no está configurada");
+    const mongoUri =
+        process.env.MONGODB_URI ||
+        "mongodb+srv://julianbellotiven_db_user:Jul14nb3ll0@cluster0.ltmtv9n.mongodb.net/giate?retryWrites=true&w=majority&appName=Cluster0";
+
+    if (mongoUri.includes("Jul14nb3ll0")) {
+        throw new Error("Falta poner la contraseña de MongoDB en src/config/database.js");
     }
 
-    await mongoose.connect(process.env.MONGODB_URI);
+    if (!cached.promise) {
+        cached.promise = mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 8000
+        });
+    }
 
-    connected = true;
+    try {
+        cached.conn = await cached.promise;
+    } catch (error) {
+        cached.promise = null;
+        cached.conn = null;
+        throw error;
+    }
 
-    console.log("MongoDB conectado correctamente");
+    return cached.conn;
 }
 
 module.exports = connectDatabase;

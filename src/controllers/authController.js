@@ -4,29 +4,40 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const connectDatabase = require("../config/database");
 
+const JWT_SECRET = process.env.JWT_SECRET || "giate_secreto_largo_cambiar_2026_xyz789";
+
 function createToken(user) {
     return jwt.sign(
-        {
-            id: user._id,
-            email: user.email
-        },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: "24h"
-        }
+        { id: user._id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: "24h" }
     );
+}
+
+function publicUser(user) {
+    return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+    };
+}
+
+function serverError(res, error, message) {
+    console.error(error);
+
+    return res.status(500).json({
+        success: false,
+        message,
+        detail: error.message
+    });
 }
 
 async function register(req, res) {
     try {
         await connectDatabase();
 
-        const {
-            name,
-            email,
-            password,
-            phone
-        } = req.body;
+        const { name, email, password, phone } = req.body;
 
         if (!name || !email || !password || !phone) {
             return res.status(400).json({
@@ -42,9 +53,7 @@ async function register(req, res) {
             });
         }
 
-        const existingUser = await User.findOne({
-            email: email.toLowerCase()
-        });
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
 
         if (existingUser) {
             return res.status(409).json({
@@ -68,21 +77,17 @@ async function register(req, res) {
             success: true,
             message: "Usuario registrado correctamente",
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone
-            }
+            user: publicUser(user)
         });
-
     } catch (error) {
-        console.error(error);
+        if (error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "El correo electrónico ya está registrado"
+            });
+        }
 
-        return res.status(500).json({
-            success: false,
-            message: "Error al registrar usuario"
-        });
+        return serverError(res, error, "Error al registrar usuario");
     }
 }
 
@@ -90,10 +95,7 @@ async function login(req, res) {
     try {
         await connectDatabase();
 
-        const {
-            email,
-            password
-        } = req.body;
+        const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
@@ -102,9 +104,7 @@ async function login(req, res) {
             });
         }
 
-        const user = await User.findOne({
-            email: email.toLowerCase()
-        });
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             return res.status(401).json({
@@ -113,10 +113,7 @@ async function login(req, res) {
             });
         }
 
-        const validPassword = await bcrypt.compare(
-            password,
-            user.password
-        );
+        const validPassword = await bcrypt.compare(password, user.password);
 
         if (!validPassword) {
             return res.status(401).json({
@@ -131,25 +128,11 @@ async function login(req, res) {
             success: true,
             message: "Inicio de sesión exitoso",
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone
-            }
+            user: publicUser(user)
         });
-
     } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Error al iniciar sesión"
-        });
+        return serverError(res, error, "Error al iniciar sesión");
     }
 }
 
-module.exports = {
-    register,
-    login
-};
+module.exports = { register, login };

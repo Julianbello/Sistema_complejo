@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = process.env.JWT_SECRET || "giate_secreto_largo_cambiar_2026_xyz789";
+
 function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
 
@@ -15,10 +17,7 @@ function authenticateToken(req, res, next) {
         : authHeader;
 
     try {
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET
-        );
+        const decoded = jwt.verify(token, JWT_SECRET);
 
         req.user = decoded;
 
