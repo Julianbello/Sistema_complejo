@@ -3,97 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GIATE - Marketplace</title>
+  <title>GIATE - Tienda</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
           colors: {
-            spotGreen: '#1DB954',
-            spotGreenHover: '#1ed760',
-            spotDark: '#121212',
-            spotCard: '#181818',
-            spotHover: '#282828',
-            spotInput: '#2a2a2a',
-            spotTextMuted: '#b3b3b3'
+            epicBg: '#101014',
+            epicNav: '#0b0b0e',
+            epicCard: '#202024',
+            epicPanel: '#2a2a2e',
+            epicLine: '#3a3a40',
+            epicBlue: '#0078f2',
+            epicBlueHover: '#1a8cff',
+            epicMuted: '#a0a0a8'
           }
         }
       }
     }
   </script>
+  <style>
+    /* Tarjeta con giro 3D para el checkout */
+    .card-scene { perspective: 1000px; }
+    .card-inner { position: relative; width: 100%; height: 100%; transition: transform .6s; transform-style: preserve-3d; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 16px; }
+    .card-back { transform: rotateY(180deg); }
+    .no-scrollbar::-webkit-scrollbar { width: 6px; }
+    .no-scrollbar::-webkit-scrollbar-thumb { background: #3a3a40; border-radius: 6px; }
+    @keyframes pop { 0% { transform: scale(.6); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+    .pop { animation: pop .35s ease-out both; }
+    @media (prefers-reduced-motion: reduce) { .card-inner { transition: none; } .pop { animation: none; } }
+  </style>
 </head>
-<body class="bg-spotDark text-white font-sans min-h-screen selection:bg-spotGreen selection:text-black">
+<body class="bg-epicBg text-white font-sans min-h-screen selection:bg-epicBlue">
 
-  <!-- Header / Navbar -->
-  <header class="bg-black/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/10">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-      
-      <!-- Logo GIATE -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-spotGreen flex items-center justify-center text-black font-black text-xl shadow-lg shadow-spotGreen/20">
-          <i class="fa-solid fa-store"></i>
-        </div>
-        <h1 class="text-2xl font-bold tracking-tight text-white">
-          GIATE<span class="text-spotGreen">.</span>
-        </h1>
-      </div>
+  <!-- Barra superior -->
+  <header class="bg-epicNav sticky top-0 z-40 border-b border-white/5">
+    <div class="max-w-[1400px] mx-auto px-5 py-3 flex items-center gap-4">
+
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2.5 shrink-0">
+        <div class="w-9 h-9 rounded-lg bg-white text-black flex items-center justify-center font-black text-lg">G</div>
+        <span class="text-lg font-extrabold tracking-tight hidden sm:block">GIATE</span>
+      </a>
+
+      <span class="hidden md:block text-sm font-semibold text-white border-b-2 border-epicBlue py-1">Tienda</span>
 
       <!-- Buscador -->
-      <div class="flex-1 max-w-xl mx-2">
+      <div class="flex-1 max-w-xl">
         <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-spotTextMuted"></i>
-          <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="¿Qué deseas buscar hoy?" 
-            class="w-full bg-spotInput text-white pl-11 pr-12 py-3 rounded-full border border-transparent focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-spotGreen text-sm transition placeholder-spotTextMuted"
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-epicMuted text-sm"></i>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar en la tienda"
+            class="w-full bg-epicCard text-white pl-10 pr-12 py-2.5 rounded-full border border-transparent hover:border-epicLine focus:border-white/40 focus:outline-none text-sm placeholder-epicMuted"
           />
-          <button id="btnSearch" class="absolute right-2 top-1/2 -translate-y-1/2 bg-spotGreen text-black font-bold p-2 rounded-full hover:scale-105 transition">
+          <button id="btnSearch" aria-label="Buscar" class="absolute right-1.5 top-1/2 -translate-y-1/2 bg-epicPanel hover:bg-epicLine text-white w-8 h-8 rounded-full transition">
             <i class="fa-solid fa-arrow-right text-xs"></i>
           </button>
         </div>
       </div>
 
-      <!-- Botones de Acción -->
-      <div class="flex items-center gap-3" id="userAuthContainer">
-        <div id="guestButtons" class="flex items-center gap-3">
-          <button
-            onclick="toggleModal('modalLogin')"
-            class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
-            Iniciar Sesión
+      <!-- Acciones -->
+      <div class="flex items-center gap-2" id="userAuthContainer">
+        <div id="guestButtons" class="flex items-center gap-2">
+          <button onclick="toggleModal('modalLogin')" class="text-sm font-semibold text-white hover:bg-white/10 px-4 py-2 rounded-lg transition">
+            Iniciar sesión
           </button>
-          <button 
-            onclick="toggleModal('modalRegister')" 
-            class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
+          <button onclick="toggleModal('modalRegister')" class="text-sm font-bold bg-epicBlue hover:bg-epicBlueHover px-4 py-2 rounded-lg transition">
             Registrarse
           </button>
         </div>
-        <div id="userButtons" class="hidden items-center gap-3">
-          <span id="userNameLabel" class="text-sm text-spotTextMuted font-semibold"></span>
+
+        <div id="userButtons" class="hidden items-center gap-1.5">
+          <span id="userNameLabel" class="hidden lg:block text-sm text-epicMuted font-medium mr-2"></span>
 
           <!-- Campanita de notificaciones -->
           <div class="relative">
-            <button onclick="toggleNotifications()" aria-label="Notificaciones" class="relative text-spotTextMuted hover:text-white p-2 transition hover:scale-110">
-              <i class="fa-solid fa-bell text-lg"></i>
-              <span id="notifBadge" class="hidden absolute -top-0.5 -right-0.5 bg-spotGreen text-black text-[10px] font-black rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">0</span>
+            <button onclick="toggleNotifications()" aria-label="Notificaciones" class="relative text-epicMuted hover:text-white w-10 h-10 rounded-lg hover:bg-white/10 transition">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notifBadge" class="hidden absolute top-0.5 right-0.5 bg-epicBlue text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">0</span>
             </button>
-            <div id="notifPanel" class="hidden absolute right-0 mt-3 w-80 max-h-96 overflow-y-auto bg-spotCard border border-white/10 rounded-2xl shadow-2xl z-50">
-              <div class="flex items-center justify-between px-4 py-3 border-b border-white/10 sticky top-0 bg-spotCard">
-                <span class="font-bold text-sm text-white">Notificaciones</span>
-                <button onclick="markAllRead()" class="text-xs text-spotGreen hover:underline font-semibold">Marcar como leídas</button>
+            <div id="notifPanel" class="hidden absolute right-0 mt-2 w-96 max-w-[92vw] max-h-[28rem] overflow-y-auto no-scrollbar bg-epicCard border border-epicLine rounded-xl shadow-2xl z-50">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-epicLine sticky top-0 bg-epicCard">
+                <span class="font-bold text-sm">Notificaciones</span>
+                <button onclick="markAllRead()" class="text-xs text-epicBlueHover hover:underline font-semibold">Marcar como leídas</button>
               </div>
               <div id="notifList"></div>
             </div>
           </div>
 
-          <button 
-            onclick="toggleModal('modalProduct')" 
-            class="bg-spotGreen text-black font-bold text-sm px-5 py-2.5 rounded-full hover:bg-spotGreenHover transition transform hover:scale-105 shadow-md shadow-spotGreen/20 flex items-center gap-2">
+          <button onclick="openMine()" class="text-sm font-semibold text-white hover:bg-white/10 px-3 py-2 rounded-lg transition flex items-center gap-2">
+            <i class="fa-solid fa-box-open text-epicMuted"></i> <span class="hidden sm:inline">Mis publicaciones</span>
+          </button>
+
+          <button onclick="toggleModal('modalProduct')" class="bg-epicBlue hover:bg-epicBlueHover text-white font-bold text-sm px-4 py-2 rounded-lg transition flex items-center gap-2">
             <i class="fa-solid fa-plus text-xs"></i> Publicar
           </button>
-          <button onclick="logout()" class="text-spotTextMuted hover:text-white font-bold text-sm px-4 py-2 transition rounded-full hover:scale-105">
+
+          <button onclick="logout()" class="text-sm font-semibold text-epicMuted hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition">
             Salir
           </button>
         </div>
@@ -102,130 +118,409 @@
     </div>
   </header>
 
-  <!-- Banner Informativo -->
-  <div class="bg-gradient-to-r from-emerald-900/60 via-spotDark to-emerald-900/60 border-b border-white/5 py-2.5 px-4 text-center text-xs font-semibold text-spotTextMuted">
-    <span class="text-spotGreen font-bold mr-1"><i class="fa-solid fa-bolt"></i> GIATE MARKETPLACE:</span> Sistema de comercio directo de usuario a usuario.
-  </div>
+  <main class="max-w-[1400px] mx-auto px-5 py-8">
 
-  <!-- Contenido Principal -->
-  <main class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-
-    <!-- Panel Lateral: Filtros -->
-    <aside class="bg-spotCard p-6 rounded-2xl border border-white/5 h-fit shadow-xl">
-      <div class="flex items-center justify-between mb-6 pb-3 border-b border-white/10">
-        <h3 class="font-bold text-lg text-white flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-spotGreen"></i> Filtros
-        </h3>
-      </div>
-      
-      <div class="mb-5">
-        <label class="block text-xs font-bold text-spotTextMuted uppercase tracking-wider mb-2">Categoría</label>
-        <select id="filterCategory" class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen cursor-pointer">
-          <option value="">Todas las categorías</option>
-          <option value="Tecnología">Tecnología</option>
-          <option value="Ropa">Ropa y Moda</option>
-          <option value="Hogar">Hogar y Muebles</option>
-          <option value="Deportes">Deportes</option>
-        </select>
-      </div>
-
-      <div class="mb-6">
-        <label class="block text-xs font-bold text-spotTextMuted uppercase tracking-wider mb-2">Rango de Precio ($)</label>
-        <div class="flex items-center gap-2">
-          <input type="number" id="minPrice" placeholder="Mín" class="w-1/2 bg-spotInput text-white p-2.5 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-          <span class="text-spotTextMuted">-</span>
-          <input type="number" id="maxPrice" placeholder="Máx" class="w-1/2 bg-spotInput text-white p-2.5 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
+    <!-- Destacado (se llena con los productos más recientes) -->
+    <section id="heroSection" class="hidden mb-12">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
+        <div class="relative rounded-2xl overflow-hidden bg-epicCard min-h-[340px] md:min-h-[440px] group">
+          <img id="heroImage" src="" alt="" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-epicBg via-epicBg/50 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 p-6 md:p-10 max-w-2xl">
+            <span id="heroCategory" class="inline-block text-xs font-semibold bg-white/15 backdrop-blur px-3 py-1 rounded-full mb-3"></span>
+            <h2 id="heroTitle" class="text-3xl md:text-5xl font-extrabold leading-tight tracking-tight line-clamp-2"></h2>
+            <p id="heroDesc" class="text-sm md:text-base text-white/80 mt-3 line-clamp-2"></p>
+            <div class="flex items-center gap-4 mt-6">
+              <button id="heroBuy" class="bg-epicBlue hover:bg-epicBlueHover text-white font-bold px-7 py-3 rounded-lg transition">Comprar ahora</button>
+              <span id="heroPrice" class="text-lg font-bold"></span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <button id="btnFilter" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold text-sm hover:bg-spotGreenHover transition transform active:scale-95 shadow-lg shadow-spotGreen/10">
-        Aplicar Filtros
-      </button>
-    </aside>
-
-    <!-- Grilla de Productos -->
-    <section class="md:col-span-3">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-white tracking-tight">Publicaciones Recientes</h2>
-        <span id="productCount" class="text-xs text-spotTextMuted font-semibold bg-spotCard px-3 py-1.5 rounded-full border border-white/5">Cargando catálogo...</span>
-      </div>
-
-      <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Renderizado dinámico de productos -->
+        <div id="heroList" class="hidden lg:flex flex-col gap-2"></div>
       </div>
     </section>
 
+    <div class="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
+
+      <!-- Filtros -->
+      <aside class="h-fit md:sticky md:top-24">
+        <h3 class="font-bold text-lg mb-5">Filtros</h3>
+
+        <div class="mb-5">
+          <label for="filterCategory" class="block text-sm font-semibold mb-2">Categoría</label>
+          <select id="filterCategory" class="w-full bg-epicCard text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-white/50 cursor-pointer">
+            <option value="">Todas las categorías</option>
+            <option value="Tecnología">Tecnología</option>
+            <option value="Ropa">Ropa y Moda</option>
+            <option value="Hogar">Hogar y Muebles</option>
+            <option value="Deportes">Deportes</option>
+          </select>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-semibold mb-2">Precio ($)</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="minPrice" placeholder="Mín" class="w-1/2 bg-epicCard text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-white/50" />
+            <span class="text-epicMuted">-</span>
+            <input type="number" id="maxPrice" placeholder="Máx" class="w-1/2 bg-epicCard text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-white/50" />
+          </div>
+        </div>
+
+        <button id="btnFilter" class="w-full bg-epicPanel hover:bg-epicLine text-white py-3 rounded-lg font-bold text-sm transition">
+          Aplicar filtros
+        </button>
+      </aside>
+
+      <!-- Catálogo -->
+      <section>
+        <div class="flex justify-between items-end mb-5">
+          <h2 class="text-2xl font-bold tracking-tight">Descubrir productos</h2>
+          <span id="productCount" class="text-sm text-epicMuted">Cargando catálogo...</span>
+        </div>
+
+        <div id="productsGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8"></div>
+      </section>
+
+    </div>
   </main>
 
-  <!-- Modal: Registro de Usuario -->
-  <div id="modalRegister" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-      <button onclick="toggleModal('modalRegister')" class="absolute top-4 right-4 text-spotTextMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-      <h3 class="text-xl font-bold mb-4 text-white">Crear Cuenta en GIATE</h3>
-      <form id="formRegister" class="space-y-4">
-        <input type="text" id="regName" placeholder="Nombre Completo" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <input type="email" id="regEmail" placeholder="Correo Electrónico" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <input type="password" id="regPassword" placeholder="Contraseña" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <input type="text" id="regPhone" placeholder="Teléfono / Contacto" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Registrarme</button>
+  <!-- ============ MODAL: Registro ============ -->
+  <div id="modalRegister" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-md w-full p-7 relative">
+      <button onclick="toggleModal('modalRegister')" aria-label="Cerrar" class="absolute top-4 right-4 text-epicMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-5">Crea tu cuenta en GIATE</h3>
+      <form id="formRegister" class="space-y-3">
+        <input type="text" id="regName" placeholder="Nombre completo" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <input type="email" id="regEmail" placeholder="Correo electrónico" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <input type="password" id="regPassword" placeholder="Contraseña (mínimo 8 caracteres)" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <input type="text" id="regPhone" placeholder="Teléfono de contacto" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <button type="submit" class="w-full bg-epicBlue hover:bg-epicBlueHover text-white py-3 rounded-lg font-bold transition">Crear cuenta</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Iniciar Sesión -->
-  <div id="modalLogin" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-      <button onclick="toggleModal('modalLogin')" class="absolute top-4 right-4 text-spotTextMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-      <h3 class="text-xl font-bold mb-4 text-white">Iniciar Sesión en GIATE</h3>
-      <form id="formLogin" class="space-y-4">
-        <input type="email" id="loginEmail" placeholder="Correo Electrónico" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <input type="password" id="loginPassword" placeholder="Contraseña" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Entrar</button>
+  <!-- ============ MODAL: Iniciar sesión ============ -->
+  <div id="modalLogin" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-md w-full p-7 relative">
+      <button onclick="toggleModal('modalLogin')" aria-label="Cerrar" class="absolute top-4 right-4 text-epicMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-5">Inicia sesión en GIATE</h3>
+      <form id="formLogin" class="space-y-3">
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <input type="password" id="loginPassword" placeholder="Contraseña" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <button type="submit" class="w-full bg-epicBlue hover:bg-epicBlueHover text-white py-3 rounded-lg font-bold transition">Entrar</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Publicar Producto -->
-  <div id="modalProduct" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-      <button onclick="toggleModal('modalProduct')" class="absolute top-4 right-4 text-spotTextMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-      <h3 class="text-xl font-bold mb-4 text-white">Publicar Producto en GIATE</h3>
-      <form id="formProduct" class="space-y-4">
-        <input type="text" id="prodTitle" placeholder="Título del Producto" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <textarea id="prodDesc" placeholder="Descripción detallada" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen h-24"></textarea>
-        <input type="number" id="prodPrice" placeholder="Precio ($)" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <select id="prodCategory" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen">
+  <!-- ============ MODAL: Publicar producto ============ -->
+  <div id="modalProduct" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-md w-full p-7 relative max-h-[92vh] overflow-y-auto no-scrollbar">
+      <button onclick="toggleModal('modalProduct')" aria-label="Cerrar" class="absolute top-4 right-4 text-epicMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-5">Publicar un producto</h3>
+      <form id="formProduct" class="space-y-3">
+        <input type="text" id="prodTitle" placeholder="Título del producto" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <textarea id="prodDesc" placeholder="Descripción detallada" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue h-24"></textarea>
+        <input type="number" id="prodPrice" placeholder="Precio ($)" min="0" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <select id="prodCategory" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue">
           <option value="Tecnología">Tecnología</option>
           <option value="Ropa">Ropa y Moda</option>
           <option value="Hogar">Hogar y Muebles</option>
           <option value="Deportes">Deportes</option>
         </select>
-        <input type="text" id="prodImage" placeholder="URL de Imagen (Opcional)" class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Publicar Ahora</button>
+        <input type="text" id="prodImage" placeholder="URL de la imagen (opcional)" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <button type="submit" class="w-full bg-epicBlue hover:bg-epicBlueHover text-white py-3 rounded-lg font-bold transition">Publicar ahora</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Confirmar Compra (dirección + método de pago) -->
-  <div id="modalCheckout" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-spotCard border border-white/10 rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-      <button onclick="toggleModal('modalCheckout')" class="absolute top-4 right-4 text-spotTextMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-      <h3 class="text-xl font-bold mb-4 text-white">Confirmar Compra</h3>
-      <form id="formCheckout" class="space-y-4">
-        <input type="text" id="checkoutAddress" placeholder="Dirección de entrega" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen" />
-        <select id="checkoutPayment" required class="w-full bg-spotInput text-white p-3 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-spotGreen">
-          <option value="">Selecciona un método de pago</option>
-          <option value="Tarjeta">Tarjeta de crédito/débito</option>
-          <option value="MercadoPago">MercadoPago</option>
-          <option value="Contraentrega">Pago contraentrega</option>
+  <!-- ============ MODAL: Editar producto ============ -->
+  <div id="modalEdit" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-[55]">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-md w-full p-7 relative max-h-[92vh] overflow-y-auto no-scrollbar">
+      <button onclick="toggleModal('modalEdit')" aria-label="Cerrar" class="absolute top-4 right-4 text-epicMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-5">Editar publicación</h3>
+      <form id="formEdit" class="space-y-3">
+        <input type="hidden" id="editId" />
+        <input type="text" id="editTitle" placeholder="Título del producto" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <textarea id="editDesc" placeholder="Descripción detallada" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue h-24"></textarea>
+        <input type="number" id="editPrice" placeholder="Precio ($)" min="0" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <select id="editCategory" required class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue">
+          <option value="Tecnología">Tecnología</option>
+          <option value="Ropa">Ropa y Moda</option>
+          <option value="Hogar">Hogar y Muebles</option>
+          <option value="Deportes">Deportes</option>
         </select>
-        <button type="submit" class="w-full bg-spotGreen text-black py-3 rounded-full font-bold hover:bg-spotGreenHover transition shadow-lg shadow-spotGreen/20">Confirmar y Pagar</button>
+        <input type="text" id="editImage" placeholder="URL de la imagen (opcional)" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+        <button type="submit" class="w-full bg-epicBlue hover:bg-epicBlueHover text-white py-3 rounded-lg font-bold transition">Guardar cambios</button>
       </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: Mis publicaciones ============ -->
+  <div id="modalMine" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-2xl w-full p-7 relative max-h-[90vh] flex flex-col">
+      <button onclick="toggleModal('modalMine')" aria-label="Cerrar" class="absolute top-4 right-4 text-epicMuted hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      <h3 class="text-xl font-bold mb-1">Mis publicaciones</h3>
+      <p class="text-sm text-epicMuted mb-5">Edita lo que sigue disponible. Lo que ya se vendió queda solo como registro.</p>
+      <div id="mineList" class="overflow-y-auto no-scrollbar space-y-3 pr-1"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: Detalle del producto ============ -->
+  <div id="modalDetail" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-3xl w-full relative overflow-hidden max-h-[92vh] overflow-y-auto no-scrollbar">
+      <button onclick="toggleModal('modalDetail')" aria-label="Cerrar" class="absolute top-4 right-4 z-10 bg-black/60 hover:bg-black w-9 h-9 rounded-full text-white"><i class="fa-solid fa-xmark"></i></button>
+      <div class="grid grid-cols-1 md:grid-cols-2">
+        <div class="bg-black aspect-[4/5] md:aspect-auto md:min-h-[420px]">
+          <img id="detailImage" src="" alt="" class="w-full h-full object-cover" />
+        </div>
+        <div class="p-7 flex flex-col">
+          <span id="detailCategory" class="text-xs font-semibold text-epicMuted"></span>
+          <h3 id="detailTitle" class="text-2xl font-extrabold mt-1 leading-tight"></h3>
+          <div id="detailPrice" class="text-3xl font-black mt-4"></div>
+          <p id="detailDesc" class="text-sm text-white/75 mt-4 leading-relaxed flex-1 whitespace-pre-line"></p>
+          <button id="detailBuy" class="mt-6 w-full bg-epicBlue hover:bg-epicBlueHover text-white py-3.5 rounded-lg font-bold transition">Comprar ahora</button>
+          <p class="text-xs text-epicMuted mt-3 text-center"><i class="fa-solid fa-lock mr-1"></i> Tu pago y tus datos están protegidos</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: Checkout por pasos ============ -->
+  <div id="modalCheckout" class="fixed inset-0 bg-black/85 hidden items-center justify-center p-3 z-50">
+    <div class="bg-epicCard border border-epicLine rounded-2xl shadow-2xl max-w-4xl w-full relative max-h-[96vh] overflow-y-auto no-scrollbar">
+      <button onclick="toggleModal('modalCheckout')" aria-label="Cerrar" class="absolute top-4 right-4 text-epicMuted hover:text-white z-10"><i class="fa-solid fa-xmark text-xl"></i></button>
+
+      <!-- Vista de compra -->
+      <div id="checkoutWizard">
+        <!-- Indicador de pasos -->
+        <div class="px-7 pt-7 pb-5 border-b border-epicLine">
+          <h3 class="text-xl font-bold mb-5">Finalizar compra</h3>
+          <div class="flex items-center gap-2" id="stepper">
+            <div class="step-item flex items-center gap-2" data-step="1">
+              <span class="step-dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-epicBlue">1</span>
+              <span class="text-sm font-semibold">¿Dónde lo recibes?</span>
+            </div>
+            <div class="flex-1 h-px bg-epicLine step-line" data-line="1"></div>
+            <div class="step-item flex items-center gap-2" data-step="2">
+              <span class="step-dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-epicPanel text-epicMuted">2</span>
+              <span class="text-sm font-semibold hidden sm:block">¿Cómo pagas?</span>
+            </div>
+            <div class="flex-1 h-px bg-epicLine step-line" data-line="2"></div>
+            <div class="step-item flex items-center gap-2" data-step="3">
+              <span class="step-dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-epicPanel text-epicMuted">3</span>
+              <span class="text-sm font-semibold hidden sm:block">Confirma</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_300px]">
+
+          <!-- Columna izquierda: pasos -->
+          <div class="p-7">
+
+            <!-- PASO 1: ENVÍO -->
+            <div id="step1">
+              <p class="text-sm text-epicMuted mb-4">Dinos a dónde enviamos tu compra. El vendedor verá estos datos para despacharla.</p>
+              <div class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label for="coFullName" class="block text-xs font-semibold text-epicMuted mb-1">Quién recibe</label>
+                    <input type="text" id="coFullName" placeholder="Nombre y apellido" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                  </div>
+                  <div>
+                    <label for="coPhone" class="block text-xs font-semibold text-epicMuted mb-1">Teléfono de contacto</label>
+                    <input type="tel" id="coPhone" placeholder="300 123 4567" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label for="coDepartment" class="block text-xs font-semibold text-epicMuted mb-1">Departamento</label>
+                    <select id="coDepartment" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue">
+                      <option value="">Selecciona</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="coCity" class="block text-xs font-semibold text-epicMuted mb-1">Ciudad o municipio</label>
+                    <input type="text" id="coCity" placeholder="Ej: Bogotá" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                  </div>
+                </div>
+                <div>
+                  <label for="coAddress" class="block text-xs font-semibold text-epicMuted mb-1">Dirección</label>
+                  <input type="text" id="coAddress" placeholder="Calle 10 # 5-20, barrio Centro" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                </div>
+                <div>
+                  <label for="coNotes" class="block text-xs font-semibold text-epicMuted mb-1">Indicaciones para el envío (opcional)</label>
+                  <input type="text" id="coNotes" placeholder="Apto 302, portería, dejar con el vigilante..." class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                </div>
+              </div>
+            </div>
+
+            <!-- PASO 2: PAGO -->
+            <div id="step2" class="hidden">
+              <p class="text-sm text-epicMuted mb-4">Elige cómo quieres pagar.</p>
+
+              <div class="grid grid-cols-3 gap-2 mb-5" id="payMethods">
+                <button type="button" data-method="Tarjeta" class="pay-tile border border-epicLine rounded-xl p-3 text-center hover:border-white/40 transition">
+                  <i class="fa-regular fa-credit-card text-xl mb-1.5 block"></i>
+                  <span class="text-xs font-semibold">Tarjeta</span>
+                </button>
+                <button type="button" data-method="PSE" class="pay-tile border border-epicLine rounded-xl p-3 text-center hover:border-white/40 transition">
+                  <i class="fa-solid fa-building-columns text-xl mb-1.5 block"></i>
+                  <span class="text-xs font-semibold">PSE</span>
+                </button>
+                <button type="button" data-method="Contraentrega" class="pay-tile border border-epicLine rounded-xl p-3 text-center hover:border-white/40 transition">
+                  <i class="fa-solid fa-hand-holding-dollar text-xl mb-1.5 block"></i>
+                  <span class="text-xs font-semibold">Contraentrega</span>
+                </button>
+              </div>
+
+              <!-- Tarjeta -->
+              <div id="payCard" class="hidden">
+                <!-- Vista previa de la tarjeta -->
+                <div class="card-scene w-full max-w-[340px] h-[200px] mx-auto mb-5">
+                  <div class="card-inner" id="cardInner">
+                    <div class="card-face bg-gradient-to-br from-[#0078f2] via-[#1b3a8a] to-[#1a1a2e] p-5 flex flex-col justify-between shadow-xl">
+                      <div class="flex justify-between items-start">
+                        <div class="w-10 h-8 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-90"></div>
+                        <span id="cardBrandLabel" class="text-sm font-extrabold italic tracking-wide">TARJETA</span>
+                      </div>
+                      <div id="cardNumberPreview" class="text-xl tracking-[0.18em] font-semibold">•••• •••• •••• ••••</div>
+                      <div class="flex justify-between items-end text-xs">
+                        <div class="min-w-0">
+                          <div class="text-white/60 text-[10px]">Titular</div>
+                          <div id="cardNamePreview" class="font-semibold truncate max-w-[200px]">NOMBRE APELLIDO</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-white/60 text-[10px]">Vence</div>
+                          <div id="cardExpPreview" class="font-semibold">MM/AA</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-face card-back bg-gradient-to-br from-[#1a1a2e] to-[#101014] shadow-xl">
+                      <div class="h-10 bg-black mt-6"></div>
+                      <div class="px-5 mt-5">
+                        <div class="text-[10px] text-white/60 mb-1 text-right">CVV</div>
+                        <div class="bg-white text-black rounded text-right px-3 py-1.5 font-mono text-sm" id="cardCvvPreview">•••</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div>
+                    <label for="coCardNumber" class="block text-xs font-semibold text-epicMuted mb-1">Número de tarjeta</label>
+                    <input type="text" id="coCardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="19" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                  </div>
+                  <div>
+                    <label for="coCardName" class="block text-xs font-semibold text-epicMuted mb-1">Nombre como aparece en la tarjeta</label>
+                    <input type="text" id="coCardName" autocomplete="cc-name" placeholder="NOMBRE APELLIDO" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue uppercase" />
+                  </div>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div>
+                      <label for="coCardExp" class="block text-xs font-semibold text-epicMuted mb-1">Vencimiento</label>
+                      <input type="text" id="coCardExp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                    </div>
+                    <div>
+                      <label for="coCardCvv" class="block text-xs font-semibold text-epicMuted mb-1">CVV</label>
+                      <input type="password" id="coCardCvv" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue" />
+                    </div>
+                    <div>
+                      <label for="coInstallments" class="block text-xs font-semibold text-epicMuted mb-1">Cuotas</label>
+                      <select id="coInstallments" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue"></select>
+                    </div>
+                  </div>
+                  <p class="text-xs text-epicMuted"><i class="fa-solid fa-shield-halved mr-1"></i> Guardamos solo la marca y los últimos 4 dígitos. El número completo y el CVV no se almacenan.</p>
+                </div>
+              </div>
+
+              <!-- PSE -->
+              <div id="payPse" class="hidden">
+                <label for="coBank" class="block text-xs font-semibold text-epicMuted mb-1">Tu banco</label>
+                <select id="coBank" class="w-full bg-epicBg text-white p-3 border border-epicLine rounded-lg text-sm focus:outline-none focus:border-epicBlue">
+                  <option value="">Selecciona tu banco</option>
+                  <option>Bancolombia</option>
+                  <option>Davivienda</option>
+                  <option>Banco de Bogotá</option>
+                  <option>BBVA</option>
+                  <option>Nequi</option>
+                  <option>Otro banco</option>
+                </select>
+                <p class="text-sm text-epicMuted mt-3">Pagas con tu cuenta bancaria. Es un pago de demostración, no se hace ningún cobro real.</p>
+              </div>
+
+              <!-- Contraentrega -->
+              <div id="payCod" class="hidden">
+                <div class="bg-epicBg border border-epicLine rounded-xl p-4 text-sm text-white/80">
+                  <i class="fa-solid fa-hand-holding-dollar text-epicBlueHover mr-2"></i>
+                  Pagas en efectivo cuando recibas el producto. El vendedor verá que el pago queda pendiente hasta la entrega.
+                </div>
+              </div>
+            </div>
+
+            <!-- PASO 3: CONFIRMAR -->
+            <div id="step3" class="hidden">
+              <p class="text-sm text-epicMuted mb-4">Revisa que todo esté bien antes de pagar.</p>
+              <div class="space-y-3">
+                <div class="bg-epicBg border border-epicLine rounded-xl p-4 flex justify-between gap-4">
+                  <div class="min-w-0">
+                    <div class="text-xs font-semibold text-epicMuted mb-1"><i class="fa-solid fa-location-dot mr-1"></i> Envío</div>
+                    <div id="sumShipping" class="text-sm leading-relaxed"></div>
+                  </div>
+                  <button type="button" onclick="goStep(1)" class="text-xs text-epicBlueHover hover:underline font-semibold shrink-0 self-start">Cambiar</button>
+                </div>
+                <div class="bg-epicBg border border-epicLine rounded-xl p-4 flex justify-between gap-4">
+                  <div class="min-w-0">
+                    <div class="text-xs font-semibold text-epicMuted mb-1"><i class="fa-regular fa-credit-card mr-1"></i> Pago</div>
+                    <div id="sumPayment" class="text-sm leading-relaxed"></div>
+                  </div>
+                  <button type="button" onclick="goStep(2)" class="text-xs text-epicBlueHover hover:underline font-semibold shrink-0 self-start">Cambiar</button>
+                </div>
+              </div>
+            </div>
+
+            <p id="checkoutError" class="hidden mt-4 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"></p>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-between mt-6">
+              <button type="button" id="btnBack" onclick="prevStep()" class="text-sm font-semibold text-epicMuted hover:text-white px-4 py-3 rounded-lg hover:bg-white/10 transition invisible">Atrás</button>
+              <button type="button" id="btnNext" onclick="nextStep()" class="bg-epicBlue hover:bg-epicBlueHover text-white font-bold px-8 py-3 rounded-lg transition">Continuar</button>
+            </div>
+          </div>
+
+          <!-- Columna derecha: resumen del producto -->
+          <aside class="bg-epicBg/60 border-t md:border-t-0 md:border-l border-epicLine p-7">
+            <h4 class="text-sm font-bold mb-4">Resumen de tu compra</h4>
+            <div class="flex gap-3">
+              <img id="sumImage" src="" alt="" class="w-20 h-24 object-cover rounded-lg bg-black shrink-0" />
+              <div class="min-w-0">
+                <div id="sumCategory" class="text-xs text-epicMuted"></div>
+                <div id="sumTitle" class="text-sm font-bold leading-snug line-clamp-3"></div>
+              </div>
+            </div>
+            <div class="border-t border-epicLine mt-5 pt-4 space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-epicMuted">Producto</span><span id="sumPrice"></span></div>
+              <div class="flex justify-between"><span class="text-epicMuted">Envío</span><span class="text-xs text-epicMuted text-right">Lo coordinas con el vendedor</span></div>
+              <div class="flex justify-between text-base font-extrabold pt-2 border-t border-epicLine"><span>Total</span><span id="sumTotal"></span></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- Vista de éxito -->
+      <div id="checkoutSuccess" class="hidden p-10 text-center">
+        <div class="pop w-20 h-20 rounded-full bg-epicBlue mx-auto flex items-center justify-center text-4xl mb-5">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 class="text-2xl font-extrabold">¡Compra realizada!</h3>
+        <p id="successText" class="text-epicMuted mt-2 max-w-md mx-auto"></p>
+        <div id="successDetail" class="bg-epicBg border border-epicLine rounded-xl p-4 max-w-md mx-auto mt-6 text-sm text-left leading-relaxed"></div>
+        <button onclick="toggleModal('modalCheckout')" class="mt-7 bg-epicBlue hover:bg-epicBlueHover text-white font-bold px-8 py-3 rounded-lg transition">Seguir comprando</button>
+      </div>
     </div>
   </div>
 
   <!-- Avisos emergentes (toasts) -->
-  <div id="toastContainer" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-3 max-w-sm"></div>
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-[70] flex flex-col gap-3 max-w-sm w-[calc(100vw-3rem)] sm:w-auto"></div>
 
   <script src="src/main.js"></script>
 </body>
